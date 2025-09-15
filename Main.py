@@ -15,7 +15,7 @@ def parse_command(input_line):
     # Раскрываем переменные окружения перед парсингом
     expanded_line = os.path.expandvars(input_line)
     # Разбиваем на аргументы с учетом кавычек
-    return shlex.split(expanded_line)
+    return expanded_line.split()
 
 def main():
     """Основной цикл REPL (Read-Eval-Print Loop)"""
