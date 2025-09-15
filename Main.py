@@ -2,7 +2,6 @@ import os
 import shlex
 import subprocess
 
-
 def get_prompt():
     """Формирует приглашение к вводу в формате username@hostname:directory$"""
     username = os.getenv('USER') or os.getenv('USERNAME')  # Получаем имя пользователя
@@ -15,7 +14,7 @@ def parse_command(input_line):
     # Раскрываем переменные окружения перед парсингом
     expanded_line = os.path.expandvars(input_line)
     # Разбиваем на аргументы с учетом кавычек
-    return shlex.split(expanded_line)
+    return expanded_line.split()
 
 def main():
     """Основной цикл REPL (Read-Eval-Print Loop)"""
@@ -47,7 +46,6 @@ def main():
             # Обрабатываем команду cd
             elif command == 'cd':
                 print(f"Команда 'cd' вызвана с аргументами: {args[1:]}")
-                # Здесь будет реальная логика смены директории
                 
             # Неизвестная команда
             else:
