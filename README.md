@@ -1,4 +1,4 @@
-# 1 этап. REPL
+# 2 этап. Конфигурация
 # Общее описание
 Минимальный прототип эмулятора командной строки UNIX-подобной системы, реализующий базовый функционал REPL.
 
@@ -11,29 +11,17 @@
   - `cd` - выводит имя команды и аргументы
 - **Команда выхода**:
   - `exit` - завершение работы эмулятора
-
+- **Параметры командной строки**:
+  - `--vfs` - путь к физическому расположению VFS
+  - `--script` - путь к стартовому скрипту
+- **Выполнение скриптов** - выполнение скриптов с командами из файла
+- **Остановка при ошибке** - скрипт прерывается при первой ошибке выполнения
+- **Отладочный вывод** - отображение всех заданных параметров при запуске
+- **Скрипт реальной ОС** - тестирование эмулятора скриптом для реальной ОС
 # Примеры использования
-```
-Добро пожаловать в эмулятор командной строки!
+<img width="707" height="341" alt="image" src="https://github.com/user-attachments/assets/8c62d8fb-af2a-46ff-b1c2-a1b40546b3d0" />
+<img width="771" height="260" alt="image" src="https://github.com/user-attachments/assets/b4754e78-451c-4da3-a74c-4209188d0756" />
+<img width="790" height="193" alt="image" src="https://github.com/user-attachments/assets/69c08833-e027-4a13-b18a-14c4791de564" />
+<img width="797" height="196" alt="image" src="https://github.com/user-attachments/assets/43ff9492-9186-4446-b5b2-0cf38ff40259" />
 
-Введите 'exit' для выхода.
 
-desen@DesengerMini:C:\Users\desen\konf-uprv$ ls $HOME
-
-Команда 'ls' вызвана с аргументами: ['$HOME']
-```
-```
-desen@DesengerMini:C:\Users\desen\konf-uprv$ asas
-
-Ошибка: неизвестная команда 'asas'
-```
-```
-desen@DesengerMini:C:\Users\desen\konf-uprv$ cd -r -r -2 -3
-
-Команда 'cd' вызвана с аргументами: ['-r', '-r', '-2', '-3']
-```
-```
-desen@DesengerMini:C:\Users\desen\konf-uprv$ exit
-
-Выход из эмулятора
-```
