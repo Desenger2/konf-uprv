@@ -78,9 +78,8 @@ def main():
     # Выполнение скрипта
     if args.script:
         success = execute_script(args.script, args.vfs)
-        if not success:
-            sys.exit(1)
-        return
+        if success:
+            return
     
     # Интерактивный режим
     print("Добро пожаловать в эмулятор командной строки!")
