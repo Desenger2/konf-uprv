@@ -1,13 +1,33 @@
 <vfs>
     <dir name="root">
-        <file name="file1.txt">Rmlyc3QgZmlsZSBpbiByb290</file>
+        <file name="file1.txt">Строка 1
+Строка 2
+Строка 3
+Строка 4
+Строка 5
+Строка 6
+Строка 7
+Строка 8
+Строка 9
+Строка 10
+Строка 11</file>
     </dir>
     <dir name="home">
         <dir name="user">
-            <file name="document.txt">RG9jdW1lbnQgY29udGVudA==</file>
+            <file name="document.txt">Это содержимое документа пользователя</file>
             <dir name="projects">
-                <file name="project1.py">cHJpbnQoIkhlbGxvIFZGUyIp</file>
-                <file name="readme.md">UHJvamVjdCByZWFkbWU=</file>
+                <file name="project1.py">print("Hello World")
+print("This is a test")
+print("VFS emulator")</file>
+                <file name="readme.md"># Проект 1
+## Описание
+Это тестовый проект для демонстрации VFS
+
+## Установка
+Просто запустите файл
+
+## Использование
+python project1.py</file>
             </dir>
         </dir>
     </dir>
