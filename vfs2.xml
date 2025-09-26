@@ -1,0 +1,14 @@
+<vfs>
+    <dir name="root">
+        <file name="file1.txt">Rmlyc3QgZmlsZSBpbiByb290</file>
+    </dir>
+    <dir name="home">
+        <dir name="user">
+            <file name="document.txt">RG9jdW1lbnQgY29udGVudA==</file>
+            <dir name="projects">
+                <file name="project1.py">cHJpbnQoIkhlbGxvIFZGUyIp</file>
+                <file name="readme.md">UHJvamVjdCByZWFkbWU=</file>
+            </dir>
+        </dir>
+    </dir>
+</vfs>
