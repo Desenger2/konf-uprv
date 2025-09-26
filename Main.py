@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import base64
 import getpass
 from datetime import datetime
+import shutil
 
 class VFSNode:
     """Узел виртуальной файловой системы"""
@@ -15,6 +16,7 @@ class VFSNode:
         self.content = content
         self.children = {}
         self.parent = parent
+        self.created_time = datetime.now()
 
 class VFS:
     """Виртуальная файловая система"""
@@ -34,9 +36,11 @@ class VFS:
             if root.tag != "vfs":
                 return False, "Неверный формат XML: ожидается корневой элемент <vfs>"
             
+
             self.root = VFSNode("", is_file=False)
             self.current_dir = self.root
             
+
             for child in root:
                 self._parse_node(child, self.root)
             
@@ -102,6 +106,19 @@ class VFS:
         
         return current
     
+    def resolve_parent_path(self, path):
+        """Разрешает путь к родительской директории файла"""
+        if path.endswith("/"):
+            path = path[:-1]
+        
+        if "/" in path:
+            parent_path = "/".join(path.split("/")[:-1])
+            filename = path.split("/")[-1]
+            parent_dir = self.resolve_path(parent_path)
+            return parent_dir, filename
+        else:
+            return self.current_dir, path
+    
     def list_directory(self, path="."):
         """Список содержимого директории"""
         node = self.resolve_path(path)
@@ -140,6 +157,42 @@ class VFS:
         file_lines = content.split('\n')
         start_index = max(0, len(file_lines) - lines)
         return '\n'.join(file_lines[start_index:]), None
+    
+    def create_file(self, path, content=""):
+        """Создает файл в VFS"""
+        parent_dir, filename = self.resolve_parent_path(path)
+        
+        if not parent_dir:
+            return False, "Родительская директория не найдена"
+        
+        if parent_dir.is_file:
+            return False, "Родительский путь ведет к файлу, а не директории"
+        
+        if filename in parent_dir.children:
+            return False, "Файл уже существует"
+        
+        new_file = VFSNode(filename, is_file=True, content=content, parent=parent_dir)
+        parent_dir.children[filename] = new_file
+        return True, "Файл создан"
+    
+    def copy_file(self, src_path, dst_path):
+        """Копирует файл в VFS"""
+        src_node = self.resolve_path(src_path)
+        if not src_node:
+            return False, "Исходный файл не найден"
+        if not src_node.is_file:
+            return False, "Исходный путь ведет к директории, а не файлу"
+        
+        parent_dir, filename = self.resolve_parent_path(dst_path)
+        
+        if not parent_dir:
+            return False, "Директория назначения не найдена"
+        if parent_dir.is_file:
+            return False, "Путь назначения ведет к файлу, а не директории"
+
+        new_file = VFSNode(filename, is_file=True, content=src_node.content, parent=parent_dir)
+        parent_dir.children[filename] = new_file
+        return True, "Файл скопирован"
 
 def get_prompt(vfs):
     """Формирует приглашение к вводу с учетом текущей директории VFS"""
@@ -171,22 +224,22 @@ def execute_command(command, args, vfs, vfs_loaded):
     elif command == 'ls':
         if not vfs_loaded:
             print("Ошибка: VFS не загружена")
-            return False, "Ошибка выполнения" 
+            return False, "Ошибка выполнения"
         
         path = args[0] if args else "."
         items, error = vfs.list_directory(path)
         if error:
             print(f"ls: {error}")
-            return False, "Ошибка выполнения" 
+            return False, "Ошибка выполнения"
         else:
             for name, item_type in items:
                 print(f"{name} ({item_type})")
-            return False, None 
+            return False, None
     
     elif command == 'cd':
         if not vfs_loaded:
             print("Ошибка: VFS не загружена")
-            return False, "Ошибка выполнения" 
+            return False, "Ошибка выполнения"
         
         if args:
             path = args[0]
@@ -195,19 +248,19 @@ def execute_command(command, args, vfs, vfs_loaded):
                 vfs.current_dir = node
             else:
                 print(f"cd: Директория не найдена: {path}")
-                return False, "Ошибка выполнения"  
+                return False, "Ошибка выполнения"
         else:
             vfs.current_dir = vfs.root
-        return False, None  
+        return False, None
     
     elif command == 'cat':
         if not vfs_loaded:
             print("Ошибка: VFS не загружена")
-            return False, "Ошибка выполнения" 
+            return False, "Ошибка выполнения"
         
         if not args:
             print("cat: Укажите путь к файлу")
-            return False, "Ошибка выполнения"  
+            return False, "Ошибка выполнения"
         
         success = True
         for file_path in args:
@@ -227,12 +280,11 @@ def execute_command(command, args, vfs, vfs_loaded):
         
         if not args:
             print("tail: Укажите путь к файлу")
-            return False, "Ошибка выполнения"  
-
-        lines = 10
-        file_path = args[-1] 
+            return False, "Ошибка выполнения"
         
-        # Обрабатываем опцию -n
+        lines = 10
+        file_path = args[-1]
+        
         if len(args) > 1 and args[0] == '-n':
             if len(args) > 2:
                 try:
@@ -243,27 +295,78 @@ def execute_command(command, args, vfs, vfs_loaded):
                     return False, "Ошибка выполнения"
             else:
                 print("tail: опция требует аргумента -n")
-                return False, "Ошибка выполнения" 
+                return False, "Ошибка выполнения"
         
         content, error = vfs.get_file_tail(file_path, lines)
         if error:
             print(f"tail: {error}")
-            return False, "Ошибка выполнения" 
+            return False, "Ошибка выполнения"
         else:
             print(content or "(файл пуст)")
-            return False, None  
+            return False, None
     
     elif command == 'who':
-        # Команда who работает без VFS
         username = getpass.getuser()
         hostname = os.getenv('HOSTNAME') or subprocess.getoutput('hostname')
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"{username}@{hostname} {current_time}")
-        return False, None  
+        return False, None
+    
+    elif command == 'touch':
+        if not vfs_loaded:
+            print("Ошибка: VFS не загружена")
+            return False, "Ошибка выполнения"
+        
+        if not args:
+            print("touch: Укажите путь к файлу")
+            return False, "Ошибка выполнения"
+        
+        success = True
+        for file_path in args:
+            result, message = vfs.create_file(file_path)
+            if result:
+                print(f"touch: создан файл '{file_path}'")
+            else:
+                print(f"touch: {message}")
+                success = False
+        
+        return False, "Ошибка выполнения" if not success else None
+    
+    elif command == 'cp':
+        if not vfs_loaded:
+            print("Ошибка: VFS не загружена")
+            return False, "Ошибка выполнения"
+        
+        if len(args) != 2:
+            print("cp: Использование: cp <источник> <назначение>")
+            return False, "Ошибка выполнения"
+        
+        src_path, dst_path = args[0], args[1]
+        result, message = vfs.copy_file(src_path, dst_path)
+        if result:
+            print(f"cp: файл скопирован из '{src_path}' в '{dst_path}'")
+            return False, None
+        else:
+            print(f"cp: {message}")
+            return False, "Ошибка выполнения"
+    
+    elif command == 'vfs-load':
+        if not args:
+            print("vfs-load: Укажите путь к XML файлу VFS")
+            return False, "Ошибка выполнения"
+        
+        xml_path = args[0]
+        success, message = vfs.load_from_xml(xml_path)
+        if success:
+            print(f"vfs-load: {message}")
+            return False, "VFS_RELOADED" 
+        else:
+            print(f"vfs-load: {message}")
+            return False, "Ошибка выполнения"
     
     else:
         print(f"Ошибка: неизвестная команда '{command}'")
-        return False, "Ошибка выполнения" 
+        return False, "Ошибка выполнения"
 
 def execute_script(script_path, vfs, vfs_loaded):
     """Выполняет стартовый скрипт (останавливается при первой ошибке)"""
@@ -290,20 +393,24 @@ def execute_script(script_path, vfs, vfs_loaded):
             exit_requested, error = execute_command(command, args, vfs, vfs_loaded)
             
             if exit_requested:
-                return True 
+                return True, vfs_loaded
             
-            if error:  
+            if error == "VFS_RELOADED":
+                vfs_loaded = True
+                continue 
+            
+            if error and error != "VFS_RELOADED":
                 print(f"Остановка скрипта на строке {line_num} из-за ошибки")
-                return False 
+                return False, vfs_loaded
                 
-        return True
+        return True, vfs_loaded
         
     except FileNotFoundError:
         print(f"Ошибка: скрипт '{script_path}' не найден")
-        return False
+        return False, vfs_loaded
     except Exception as e:
         print(f"Ошибка выполнения скрипта: {e}")
-        return False
+        return False, vfs_loaded
 
 def main():
     """Основной цикл REPL с поддержкой VFS и новых команд"""
@@ -313,7 +420,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Инициализация VFS
     vfs = VFS()
     vfs_loaded = False
     
@@ -333,16 +439,16 @@ def main():
     
     # Выполнение скрипта
     if args.script:
-        success = execute_script(args.script, vfs, vfs_loaded)
+        success, vfs_loaded = execute_script(args.script, vfs, vfs_loaded)
         if success:
             return
     
     # Интерактивный режим
     print("Добро пожаловать в эмулятор командной строки!")
     if vfs_loaded:
-        print("VFS загружена. Доступные команды: ls, cd, cat, tail, who, exit")
+        print("VFS загружена. Доступные команды: ls, cd, cat, tail, who, touch, cp, vfs-load, exit")
     else:
-        print("VFS не загружена. Доступные команды: who, exit")
+        print("VFS не загружена. Доступные команды: who, vfs-load, exit")
     
     while True:
         try:
@@ -356,6 +462,9 @@ def main():
             args = cmd_args[1:]
             
             exit_requested, error = execute_command(command, args, vfs, vfs_loaded)
+            
+            if error == "VFS_RELOADED":
+                vfs_loaded = True  # VFS была перезагружена
             
             if exit_requested:
                 break
