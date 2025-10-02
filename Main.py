@@ -36,11 +36,9 @@ class VFS:
             if root.tag != "vfs":
                 return False, "Неверный формат XML: ожидается корневой элемент <vfs>"
             
-
             self.root = VFSNode("", is_file=False)
             self.current_dir = self.root
             
-
             for child in root:
                 self._parse_node(child, self.root)
             
@@ -59,7 +57,6 @@ class VFS:
         node = VFSNode(name, is_file, parent=parent_node)
         
         if is_file:
-            # Декодируем содержимое файла из base64
             content = element.text.strip() if element.text else ""
             if content:
                 try:
@@ -189,10 +186,42 @@ class VFS:
             return False, "Директория назначения не найдена"
         if parent_dir.is_file:
             return False, "Путь назначения ведет к файлу, а не директории"
-
+        
         new_file = VFSNode(filename, is_file=True, content=src_node.content, parent=parent_dir)
         parent_dir.children[filename] = new_file
         return True, "Файл скопирован"
+
+def format_ls_output(items):
+    """Форматирует вывод ls"""
+    if not items:
+        return ""
+    
+    max_name_length = max(len(name) for name, _ in items) + 2
+    terminal_width = 80
+    num_columns = max(1, terminal_width // max_name_length)
+    num_items = len(items)
+    num_rows = (num_items + num_columns - 1) // num_columns
+    
+    output_lines = []
+    
+    for row in range(num_rows):
+        line = ""
+        for col in range(num_columns):
+            index = row + col * num_rows
+            if index < num_items:
+                name, item_type = items[index]
+                if item_type == 'dir':
+                    display_name = name + '/'
+                else:
+                    display_name = name
+                
+                if col < num_columns - 1:
+                    display_name = display_name.ljust(max_name_length)
+                
+                line += display_name
+        output_lines.append(line.rstrip())
+    
+    return '\n'.join(output_lines)
 
 def get_prompt(vfs):
     """Формирует приглашение к вводу с учетом текущей директории VFS"""
@@ -226,14 +255,19 @@ def execute_command(command, args, vfs, vfs_loaded):
             print("Ошибка: VFS не загружена")
             return False, "Ошибка выполнения"
         
-        path = args[0] if args else "."
+        path = "."
+        for arg in args:
+            if not arg.startswith('-'):
+                path = arg
+                break
+        
         items, error = vfs.list_directory(path)
         if error:
             print(f"ls: {error}")
             return False, "Ошибка выполнения"
         else:
-            for name, item_type in items:
-                print(f"{name} ({item_type})")
+            output = format_ls_output(items)
+            print(output)
             return False, None
     
     elif command == 'cd':
@@ -359,7 +393,7 @@ def execute_command(command, args, vfs, vfs_loaded):
         success, message = vfs.load_from_xml(xml_path)
         if success:
             print(f"vfs-load: {message}")
-            return False, "VFS_RELOADED" 
+            return False, "VFS_RELOADED"
         else:
             print(f"vfs-load: {message}")
             return False, "Ошибка выполнения"
@@ -464,7 +498,7 @@ def main():
             exit_requested, error = execute_command(command, args, vfs, vfs_loaded)
             
             if error == "VFS_RELOADED":
-                vfs_loaded = True  # VFS была перезагружена
+                vfs_loaded = True
             
             if exit_requested:
                 break
