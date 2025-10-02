@@ -33,19 +33,26 @@
 - **Иерархическая структура** - поддержка директорий и файлов с вложенностью
 - **Обработка ошибок VFS** - сообщения о проблемах загрузки и неверном формате
 - **Интеграция с интерфейсом** - приглашение показывает текущий путь в VFS
+- **Тесты** - тестирование функционала эмулятора
 
 # Описание команд для сборки проекта и запуска тестов
-  Чтобы запустить проект, можно воспользоваться следующими командами:
+Чтобы запустить проект, можно воспользоваться следующими командами:
 - `python Main.py` - запуск без конфигурации
 - `python Main.py --script [путь до скрипта]` - запуск со стартовым скриптом
 - `python Main.py --vfs [путь до VFS]` - запуск с vfs
 - `python Main.py --vfs [путь до VFS] --script [путь до скрипта]` - запуск с vfs и стартовым скриптом 
 
+Чтобы запустить тесты, можно вопсользоваться следующими командами:
+- `pip install -r requirements.txt` - установка зависимостей для запуска тестов
+- `pytest` - запуск всех тестов
+- `pytest test_vfs.py` - запуск тестов работы с vfs
+- `pytest test_commands.py` - запуск тестов комманд
 # Примеры использования
 <img width="535" height="283" alt="image" src="https://github.com/user-attachments/assets/4ce8789b-5b55-488b-8c1d-1612d6dd11cf" />
-<img width="778" height="442" alt="image" src="https://github.com/user-attachments/assets/d8dc672a-d1d7-4602-bb18-e93f728c305b" />
-<img width="708" height="573" alt="image" src="https://github.com/user-attachments/assets/69ab15cf-29f5-4ce2-893e-ea43854108fd" />
-<img width="797" height="491" alt="image" src="https://github.com/user-attachments/assets/82c9c72c-d5ad-4b88-8b97-e47883b75530" />
+<img width="770" height="372" alt="image" src="https://github.com/user-attachments/assets/baff37a1-4c4b-4775-b278-07bcc0925aeb" />
+<img width="707" height="482" alt="image" src="https://github.com/user-attachments/assets/a4c2a532-eeb9-49ba-a83c-674fe9ec460c" />
+<img width="782" height="467" alt="image" src="https://github.com/user-attachments/assets/ead6926d-f324-44cc-bdf9-71bfa3c54c93" />
+
 
 
 
